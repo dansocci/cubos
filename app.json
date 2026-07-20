@@ -1,22 +1,59 @@
 {
   "expo": {
-    "name": "cubos",
+    "name": "Cubos",
     "slug": "cubos",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
+    },
+    "plugins": [
+      "expo-sqlite",
+      "expo-video",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Cubos precisa acessar suas fotos para cadastrar cubos e mídias.",
+          "cameraPermission": "O Cubos precisa da câmera para fotografar seus cubos."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ]
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cubos.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "O Cubos precisa da câmera para fotografar seus cubos.",
+        "NSPhotoLibraryUsageDescription": "O Cubos precisa acessar suas fotos para cadastrar cubos e mídias.",
+        "NSMicrophoneUsageDescription": "O Cubos pode usar o microfone ao gravar vídeos."
+      }
     },
     "android": {
+      "package": "com.cubos.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
