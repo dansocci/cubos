@@ -1,6 +1,7 @@
 import * as Crypto from 'expo-crypto';
 
-import type { Cube, CubeInput, Difficulty } from '../types/cube';
+import type { Cube, CubeInput, CubeMedia, Difficulty } from '../types/cube';
+import { defaultMediaName } from '../types/cube';
 import { getDatabase } from './db';
 
 type CubeRow = {
@@ -15,10 +16,30 @@ type CubeRow = {
   updated_at: number;
 };
 
-function parseUris(value: string): string[] {
+function parseMediaItems(value: string): CubeMedia[] {
   try {
     const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string') : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item, index) => {
+        if (typeof item === 'string') {
+          return { uri: item, name: defaultMediaName(item, index) };
+        }
+
+        if (item && typeof item === 'object' && typeof item.uri === 'string') {
+          const customName =
+            typeof item.name === 'string' && item.name.trim()
+              ? item.name.trim()
+              : defaultMediaName(item.uri, index);
+          return { uri: item.uri, name: customName };
+        }
+
+        return null;
+      })
+      .filter((item): item is CubeMedia => item != null);
   } catch {
     return [];
   }
@@ -31,8 +52,8 @@ function mapRow(row: CubeRow): Cube {
     photoUri: row.photo_uri,
     difficulty: row.difficulty as Difficulty,
     notes: row.notes,
-    parityUris: parseUris(row.parity_uris),
-    solutionUris: parseUris(row.solution_uris),
+    parityMedia: parseMediaItems(row.parity_uris),
+    solutionMedia: parseMediaItems(row.solution_uris),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -61,8 +82,8 @@ export async function insertCube(input: CubeInput): Promise<Cube> {
     photoUri: input.photoUri,
     difficulty: input.difficulty,
     notes: input.notes?.trim() ? input.notes.trim() : null,
-    parityUris: input.parityUris,
-    solutionUris: input.solutionUris,
+    parityMedia: input.parityMedia,
+    solutionMedia: input.solutionMedia,
     createdAt: now,
     updatedAt: now,
   };
@@ -77,8 +98,8 @@ export async function insertCube(input: CubeInput): Promise<Cube> {
       cube.photoUri,
       cube.difficulty,
       cube.notes,
-      JSON.stringify(cube.parityUris),
-      JSON.stringify(cube.solutionUris),
+      JSON.stringify(cube.parityMedia),
+      JSON.stringify(cube.solutionMedia),
       cube.createdAt,
       cube.updatedAt,
     ],
@@ -100,8 +121,8 @@ export async function updateCube(id: string, input: CubeInput): Promise<Cube | n
     photoUri: input.photoUri,
     difficulty: input.difficulty,
     notes: input.notes?.trim() ? input.notes.trim() : null,
-    parityUris: input.parityUris,
-    solutionUris: input.solutionUris,
+    parityMedia: input.parityMedia,
+    solutionMedia: input.solutionMedia,
     updatedAt: Date.now(),
   };
 
@@ -120,8 +141,8 @@ export async function updateCube(id: string, input: CubeInput): Promise<Cube | n
       updated.photoUri,
       updated.difficulty,
       updated.notes,
-      JSON.stringify(updated.parityUris),
-      JSON.stringify(updated.solutionUris),
+      JSON.stringify(updated.parityMedia),
+      JSON.stringify(updated.solutionMedia),
       updated.updatedAt,
       id,
     ],

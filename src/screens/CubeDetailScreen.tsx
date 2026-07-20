@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CubePlaceholder } from '../components/CubePlaceholder';
 import { ImageZoomModal } from '../components/ImageZoomModal';
 import { MediaCarousel } from '../components/MediaCarousel';
-import { SolutionVideoList } from '../components/SolutionVideoList';
+import { SolutionMediaList } from '../components/SolutionMediaList';
 import { VideoPlayerModal } from '../components/VideoPlayerModal';
 import { useCubes } from '../context/CubesContext';
 import type { RootStackParamList } from '../navigation/types';
@@ -74,8 +74,8 @@ export function CubeDetailScreen({ navigation, route }: Props) {
   };
 
   const hasNotes = Boolean(cube.notes?.trim());
-  const hasParity = cube.parityUris.length > 0;
-  const hasSolution = cube.solutionUris.length > 0;
+  const hasParity = cube.parityMedia.length > 0;
+  const hasSolution = cube.solutionMedia.length > 0;
 
   const footerPaddingBottom = Math.max(insets.bottom, spacing.sm) + spacing.md;
 
@@ -100,7 +100,7 @@ export function CubeDetailScreen({ navigation, route }: Props) {
         <Text style={styles.name}>{cube.name}</Text>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Dificuldade</Text>
+          <Text style={styles.sectionTitle}>Dificuldade:</Text>
           <View
             style={[
               styles.difficultyBadge,
@@ -121,16 +121,16 @@ export function CubeDetailScreen({ navigation, route }: Props) {
 
         {hasNotes ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Notas</Text>
+            <Text style={styles.sectionTitle}>Notas:</Text>
             <Text style={styles.notes}>{cube.notes}</Text>
           </View>
         ) : null}
 
         {hasParity ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Paridade</Text>
+            <Text style={styles.sectionTitle}>Paridade:</Text>
             <MediaCarousel
-              uris={cube.parityUris}
+              items={cube.parityMedia}
               onOpenImage={setZoomUri}
               onOpenVideo={setVideoUri}
             />
@@ -139,8 +139,12 @@ export function CubeDetailScreen({ navigation, route }: Props) {
 
         {hasSolution ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Solução</Text>
-            <SolutionVideoList uris={cube.solutionUris} onOpenVideo={setVideoUri} />
+            <Text style={styles.sectionTitle}>Solução:</Text>
+            <SolutionMediaList
+              items={cube.solutionMedia}
+              onOpenImage={setZoomUri}
+              onOpenVideo={setVideoUri}
+            />
           </View>
         ) : null}
       </ScrollView>

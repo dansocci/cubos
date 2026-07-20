@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,10 +18,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DifficultySlider } from '../components/DifficultySlider';
+import { EditableMediaList } from '../components/EditableMediaList';
 import { useCubes } from '../context/CubesContext';
-import { isVideoUri } from '../media/isVideoUri';
 import type { RootStackParamList } from '../navigation/types';
-import type { Difficulty } from '../types/cube';
+import type { CubeMedia, Difficulty } from '../types/cube';
+import { defaultMediaName } from '../types/cube';
 import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
@@ -42,6 +46,9 @@ async function ensurePermission(
 
 export function CubeFormScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  const scrollRef = useRef<ScrollView>(null);
+  const fieldOffsets = useRef<Record<string, number>>({});
   const { getCube, addCube, editCube } = useCubes();
   const editingId = route.params?.id;
   const existing = editingId ? getCube(editingId) : undefined;
@@ -52,11 +59,24 @@ export function CubeFormScreen({ navigation, route }: Props) {
   const [photoUri, setPhotoUri] = useState<string | null>(existing?.photoUri ?? null);
   const [difficulty, setDifficulty] = useState<Difficulty>(existing?.difficulty ?? 3);
   const [notes, setNotes] = useState(existing?.notes ?? '');
-  const [parityUris, setParityUris] = useState<string[]>(existing?.parityUris ?? []);
-  const [solutionUris, setSolutionUris] = useState<string[]>(existing?.solutionUris ?? []);
+  const [parityMedia, setParityMedia] = useState<CubeMedia[]>(existing?.parityMedia ?? []);
+  const [solutionMedia, setSolutionMedia] = useState<CubeMedia[]>(
+    existing?.solutionMedia ?? [],
+  );
   const [saving, setSaving] = useState(false);
 
   const footerPaddingBottom = Math.max(insets.bottom, spacing.sm) + spacing.md;
+
+  const scrollToField = (field: string) => {
+    const y = fieldOffsets.current[field];
+    if (y == null) return;
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({
+        y: Math.max(y - spacing.lg, 0),
+        animated: true,
+      });
+    }, 100);
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -71,13 +91,13 @@ export function CubeFormScreen({ navigation, route }: Props) {
         name.trim() ||
           photoUri ||
           notes.trim() ||
-          parityUris.length ||
-          solutionUris.length ||
+          parityMedia.length ||
+          solutionMedia.length ||
           difficulty !== 3,
       );
     }
     return true;
-  }, [isEditing, name, photoUri, notes, parityUris, solutionUris, difficulty]);
+  }, [isEditing, name, photoUri, notes, parityMedia, solutionMedia, difficulty]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
@@ -158,25 +178,36 @@ export function CubeFormScreen({ navigation, route }: Props) {
       selectionLimit: 10,
     });
     if (!result.canceled) {
-      const uris = result.assets.map((asset) => asset.uri);
-      setParityUris((prev) => [...prev, ...uris]);
+      setParityMedia((prev) => [
+        ...prev,
+        ...result.assets.map((asset, index) => ({
+          uri: asset.uri,
+          name: defaultMediaName(asset.uri, prev.length + index),
+        })),
+      ]);
     }
   };
 
-  const pickSolutionVideos = async () => {
+  const pickSolutionMedia = async () => {
     const ok = await ensurePermission('library');
     if (!ok) {
-      Alert.alert('Permissão necessária', 'Permita o acesso à galeria para importar vídeos.');
+      Alert.alert('Permissão necessária', 'Permita o acesso à galeria para importar mídias.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['videos'],
+      mediaTypes: ['images', 'videos'],
       allowsMultipleSelection: true,
+      quality: 0.85,
       selectionLimit: 10,
     });
     if (!result.canceled) {
-      const uris = result.assets.map((asset) => asset.uri);
-      setSolutionUris((prev) => [...prev, ...uris]);
+      setSolutionMedia((prev) => [
+        ...prev,
+        ...result.assets.map((asset, index) => ({
+          uri: asset.uri,
+          name: defaultMediaName(asset.uri, prev.length + index),
+        })),
+      ]);
     }
   };
 
@@ -193,13 +224,19 @@ export function CubeFormScreen({ navigation, route }: Props) {
 
     setSaving(true);
     try {
+      const normalizeMedia = (items: CubeMedia[]) =>
+        items.map((item, index) => ({
+          uri: item.uri,
+          name: item.name.trim() || defaultMediaName(item.uri, index),
+        }));
+
       const payload = {
         name: trimmed,
         photoUri,
         difficulty,
         notes: notes.trim() ? notes : null,
-        parityUris,
-        solutionUris,
+        parityMedia: normalizeMedia(parityMedia),
+        solutionMedia: normalizeMedia(solutionMedia),
       };
 
       if (isEditing && editingId) {
@@ -222,8 +259,19 @@ export function CubeFormScreen({ navigation, route }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={headerHeight}
+    >
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
         <Text style={styles.label}>Nome *</Text>
         <TextInput
           style={styles.input}
@@ -231,6 +279,10 @@ export function CubeFormScreen({ navigation, route }: Props) {
           onChangeText={setName}
           placeholder="Ex.: 3x3 Speed"
           placeholderTextColor={colors.textSecondary}
+          onLayout={(event) => {
+            fieldOffsets.current.name = event.nativeEvent.layout.y;
+          }}
+          onFocus={() => scrollToField('name')}
         />
 
         <Text style={styles.label}>Foto</Text>
@@ -264,10 +316,10 @@ export function CubeFormScreen({ navigation, route }: Props) {
           ) : null}
         </View>
 
-        <Text style={styles.label}>Dificuldade *</Text>
+        <Text style={styles.label}>Dificuldade: *</Text>
         <DifficultySlider value={difficulty} onChange={setDifficulty} />
 
-        <Text style={styles.label}>Notas</Text>
+        <Text style={styles.label}>Notas:</Text>
         <TextInput
           style={[styles.input, styles.notes]}
           value={notes}
@@ -276,50 +328,35 @@ export function CubeFormScreen({ navigation, route }: Props) {
           placeholderTextColor={colors.textSecondary}
           multiline
           textAlignVertical="top"
+          onLayout={(event) => {
+            fieldOffsets.current.notes = event.nativeEvent.layout.y;
+          }}
+          onFocus={() => scrollToField('notes')}
         />
 
-        <Text style={styles.label}>Paridade</Text>
-        <Text style={styles.helper}>Fotos ou vídeos importados da galeria</Text>
+        <Text style={styles.label}>Paridade:</Text>
+        <Text style={styles.helper}>
+          Fotos ou vídeos da galeria. Use as setas para reordenar.
+        </Text>
         <Pressable style={styles.secondaryButton} onPress={pickParityMedia}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
           <Text style={styles.secondaryButtonText}>Adicionar mídias</Text>
         </Pressable>
-        <View style={styles.mediaList}>
-          {parityUris.map((uri) => (
-            <View key={uri} style={styles.mediaChip}>
-              {isVideoUri(uri) ? (
-                <View style={styles.mediaVideo}>
-                  <Ionicons name="videocam" size={20} color={colors.white} />
-                </View>
-              ) : (
-                <Image source={{ uri }} style={styles.mediaThumb} />
-              )}
-              <Pressable onPress={() => setParityUris((prev) => prev.filter((item) => item !== uri))}>
-                <Ionicons name="close-circle" size={20} color={colors.danger} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
+        <EditableMediaList items={parityMedia} onChange={setParityMedia} />
 
-        <Text style={styles.label}>Solução</Text>
-        <Text style={styles.helper}>Um ou mais vídeos da galeria</Text>
-        <Pressable style={styles.secondaryButton} onPress={pickSolutionVideos}>
+        <Text style={styles.label}>Solução:</Text>
+        <Text style={styles.helper}>
+          Fotos ou vídeos da galeria. Toque no nome para editar e use as setas para reordenar.
+        </Text>
+        <Pressable style={styles.secondaryButton} onPress={pickSolutionMedia}>
           <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-          <Text style={styles.secondaryButtonText}>Adicionar vídeos</Text>
+          <Text style={styles.secondaryButtonText}>Adicionar mídias</Text>
         </Pressable>
-        <View style={styles.mediaList}>
-          {solutionUris.map((uri, index) => (
-            <View key={uri} style={styles.mediaChip}>
-              <View style={styles.mediaVideo}>
-                <Ionicons name="play" size={18} color={colors.white} />
-              </View>
-              <Text style={styles.mediaName}>Vídeo {index + 1}</Text>
-              <Pressable onPress={() => setSolutionUris((prev) => prev.filter((item) => item !== uri))}>
-                <Ionicons name="close-circle" size={20} color={colors.danger} />
-              </Pressable>
-            </View>
-          ))}
-        </View>
+        <EditableMediaList
+          items={solutionMedia}
+          onChange={setSolutionMedia}
+          editableName
+        />
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: footerPaddingBottom }]}>
@@ -334,7 +371,7 @@ export function CubeFormScreen({ navigation, route }: Props) {
           <Text style={styles.saveText}>{saving ? 'Salvando...' : 'Salvar'}</Text>
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -342,6 +379,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
   },
   content: {
     padding: spacing.lg,
@@ -411,38 +451,6 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: colors.primary,
-    fontWeight: '600',
-  },
-  mediaList: {
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  mediaChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.sm,
-  },
-  mediaThumb: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-  },
-  mediaVideo: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-    backgroundColor: '#111827',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mediaName: {
-    flex: 1,
-    color: colors.text,
     fontWeight: '600',
   },
   footer: {

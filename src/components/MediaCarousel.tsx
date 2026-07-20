@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 
 import { isVideoUri } from '../media/isVideoUri';
+import type { CubeMedia } from '../types/cube';
 import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
 type Props = {
-  uris: string[];
+  items: CubeMedia[];
   onOpenImage: (uri: string) => void;
   onOpenVideo: (uri: string) => void;
 };
@@ -25,7 +26,7 @@ type Props = {
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ITEM_WIDTH = SCREEN_WIDTH - spacing.lg * 2;
 
-export function MediaCarousel({ uris, onOpenImage, onOpenVideo }: Props) {
+export function MediaCarousel({ items, onOpenImage, onOpenVideo }: Props) {
   const [index, setIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -33,6 +34,8 @@ export function MediaCarousel({ uris, onOpenImage, onOpenVideo }: Props) {
     const next = Math.round(event.nativeEvent.contentOffset.x / ITEM_WIDTH);
     setIndex(next);
   };
+
+  const current = items[index];
 
   return (
     <View>
@@ -46,30 +49,38 @@ export function MediaCarousel({ uris, onOpenImage, onOpenVideo }: Props) {
         snapToInterval={ITEM_WIDTH}
         contentContainerStyle={styles.content}
       >
-        {uris.map((uri) => {
-          const video = isVideoUri(uri);
+        {items.map((item, itemIndex) => {
+          const video = isVideoUri(item.uri);
           return (
             <Pressable
-              key={uri}
+              key={`${item.uri}-${itemIndex}`}
               style={[styles.item, { width: ITEM_WIDTH }]}
-              onPress={() => (video ? onOpenVideo(uri) : onOpenImage(uri))}
+              onPress={() => (video ? onOpenVideo(item.uri) : onOpenImage(item.uri))}
             >
               {video ? (
                 <View style={styles.videoThumb}>
                   <Ionicons name="play-circle" size={56} color={colors.white} />
-                  <Text style={styles.videoLabel}>Vídeo</Text>
+                  <Text style={styles.videoLabel}>{item.name || 'Vídeo'}</Text>
                 </View>
               ) : (
-                <Image source={{ uri }} style={styles.image} />
+                <Image source={{ uri: item.uri }} style={styles.image} />
               )}
             </Pressable>
           );
         })}
       </ScrollView>
-      {uris.length > 1 ? (
+      {current?.name ? (
+        <Text style={styles.caption} numberOfLines={2}>
+          {current.name}
+        </Text>
+      ) : null}
+      {items.length > 1 ? (
         <View style={styles.dots}>
-          {uris.map((uri, i) => (
-            <View key={uri} style={[styles.dot, i === index && styles.dotActive]} />
+          {items.map((item, i) => (
+            <View
+              key={`${item.uri}-dot-${i}`}
+              style={[styles.dot, i === index && styles.dotActive]}
+            />
           ))}
         </View>
       ) : null}
@@ -97,10 +108,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
+    paddingHorizontal: spacing.md,
   },
   videoLabel: {
     color: colors.white,
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  caption: {
+    marginTop: spacing.sm,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
   },
   dots: {
     flexDirection: 'row',

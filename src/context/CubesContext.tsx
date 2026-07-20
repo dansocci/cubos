@@ -9,7 +9,7 @@ import React, {
 
 import * as cubesRepository from '../data/cubesRepository';
 import { copyMediaToAppStorage, deleteMediaFile, deleteMediaFiles } from '../media/copyToAppStorage';
-import type { Cube, CubeInput } from '../types/cube';
+import type { Cube, CubeInput, CubeMedia } from '../types/cube';
 
 type CubesContextValue = {
   cubes: Cube[];
@@ -23,35 +23,46 @@ type CubesContextValue = {
 
 const CubesContext = createContext<CubesContextValue | null>(null);
 
+async function persistMediaList(
+  items: CubeMedia[],
+  folder: 'parity' | 'solutions',
+): Promise<CubeMedia[]> {
+  return Promise.all(
+    items.map(async (item) => ({
+      uri: await copyMediaToAppStorage(item.uri, folder),
+      name: item.name.trim() || item.name,
+    })),
+  );
+}
+
 async function persistMedia(input: CubeInput): Promise<CubeInput> {
   const photoUri = input.photoUri
     ? await copyMediaToAppStorage(input.photoUri, 'photos')
     : null;
 
-  const parityUris = await Promise.all(
-    input.parityUris.map((uri) => copyMediaToAppStorage(uri, 'parity')),
-  );
-
-  const solutionUris = await Promise.all(
-    input.solutionUris.map((uri) => copyMediaToAppStorage(uri, 'solutions')),
-  );
+  const parityMedia = await persistMediaList(input.parityMedia, 'parity');
+  const solutionMedia = await persistMediaList(input.solutionMedia, 'solutions');
 
   return {
     ...input,
     photoUri,
-    parityUris,
-    solutionUris,
+    parityMedia,
+    solutionMedia,
   };
 }
 
 function collectRemovedUris(previous: Cube, next: CubeInput): string[] {
   const nextSet = new Set(
-    [next.photoUri, ...next.parityUris, ...next.solutionUris].filter(Boolean) as string[],
+    [
+      next.photoUri,
+      ...next.parityMedia.map((item) => item.uri),
+      ...next.solutionMedia.map((item) => item.uri),
+    ].filter(Boolean) as string[],
   );
   const previousUris = [
     previous.photoUri,
-    ...previous.parityUris,
-    ...previous.solutionUris,
+    ...previous.parityMedia.map((item) => item.uri),
+    ...previous.solutionMedia.map((item) => item.uri),
   ].filter(Boolean) as string[];
 
   return previousUris.filter((uri) => !nextSet.has(uri));
@@ -113,8 +124,8 @@ export function CubesProvider({ children }: { children: React.ReactNode }) {
       const removed = await cubesRepository.deleteCube(id);
       if (removed) {
         await deleteMediaFile(removed.photoUri);
-        await deleteMediaFiles(removed.parityUris);
-        await deleteMediaFiles(removed.solutionUris);
+        await deleteMediaFiles(removed.parityMedia.map((item) => item.uri));
+        await deleteMediaFiles(removed.solutionMedia.map((item) => item.uri));
       }
       await refresh();
     },
