@@ -74,7 +74,6 @@ export function CubeDetailScreen({ navigation, route }: Props) {
   };
 
   const hasNotes = Boolean(cube.notes?.trim());
-  const hasParity = cube.parityMedia.length > 0;
   const hasSolution = cube.solutionMedia.length > 0;
 
   const footerPaddingBottom = Math.max(insets.bottom, spacing.sm) + spacing.md;
@@ -126,16 +125,18 @@ export function CubeDetailScreen({ navigation, route }: Props) {
           </View>
         ) : null}
 
-        {hasParity ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Paridade:</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Paridade: {cube.hasParity ? 'Sim' : 'Não'}
+          </Text>
+          {cube.hasParity && cube.parityMedia.length > 0 ? (
             <MediaCarousel
               items={cube.parityMedia}
               onOpenImage={setZoomUri}
               onOpenVideo={setVideoUri}
             />
-          </View>
-        ) : null}
+          ) : null}
+        </View>
 
         {hasSolution ? (
           <View style={styles.section}>

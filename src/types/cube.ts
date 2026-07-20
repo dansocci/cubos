@@ -13,6 +13,7 @@ export type Cube = {
   photoUri: string | null;
   difficulty: Difficulty;
   notes: string | null;
+  hasParity: boolean;
   parityMedia: CubeMedia[];
   solutionMedia: CubeMedia[];
   createdAt: number;
@@ -24,6 +25,7 @@ export type CubeInput = {
   photoUri: string | null;
   difficulty: Difficulty;
   notes: string | null;
+  hasParity: boolean;
   parityMedia: CubeMedia[];
   solutionMedia: CubeMedia[];
 };

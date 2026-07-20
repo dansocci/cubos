@@ -59,6 +59,9 @@ export function CubeFormScreen({ navigation, route }: Props) {
   const [photoUri, setPhotoUri] = useState<string | null>(existing?.photoUri ?? null);
   const [difficulty, setDifficulty] = useState<Difficulty>(existing?.difficulty ?? 3);
   const [notes, setNotes] = useState(existing?.notes ?? '');
+  const [hasParity, setHasParity] = useState(
+    existing?.hasParity ?? (existing?.parityMedia.length ?? 0) > 0,
+  );
   const [parityMedia, setParityMedia] = useState<CubeMedia[]>(existing?.parityMedia ?? []);
   const [solutionMedia, setSolutionMedia] = useState<CubeMedia[]>(
     existing?.solutionMedia ?? [],
@@ -91,13 +94,14 @@ export function CubeFormScreen({ navigation, route }: Props) {
         name.trim() ||
           photoUri ||
           notes.trim() ||
+          hasParity ||
           parityMedia.length ||
           solutionMedia.length ||
           difficulty !== 3,
       );
     }
     return true;
-  }, [isEditing, name, photoUri, notes, parityMedia, solutionMedia, difficulty]);
+  }, [isEditing, name, photoUri, notes, hasParity, parityMedia, solutionMedia, difficulty]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', (event) => {
@@ -235,7 +239,8 @@ export function CubeFormScreen({ navigation, route }: Props) {
         photoUri,
         difficulty,
         notes: notes.trim() ? notes : null,
-        parityMedia: normalizeMedia(parityMedia),
+        hasParity,
+        parityMedia: hasParity ? normalizeMedia(parityMedia) : [],
         solutionMedia: normalizeMedia(solutionMedia),
       };
 
@@ -335,14 +340,42 @@ export function CubeFormScreen({ navigation, route }: Props) {
         />
 
         <Text style={styles.label}>Paridade:</Text>
-        <Text style={styles.helper}>
-          Fotos ou vídeos da galeria. Use as setas para reordenar.
-        </Text>
-        <Pressable style={styles.secondaryButton} onPress={pickParityMedia}>
-          <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-          <Text style={styles.secondaryButtonText}>Adicionar mídias</Text>
+        <Pressable
+          style={styles.checkboxRow}
+          onPress={() => {
+            setHasParity((prev) => {
+              const next = !prev;
+              if (!next) {
+                setParityMedia([]);
+              }
+              return next;
+            });
+          }}
+        >
+          <View style={[styles.checkbox, hasParity && styles.checkboxChecked]}>
+            {hasParity ? (
+              <Ionicons name="checkmark" size={16} color={colors.white} />
+            ) : null}
+          </View>
+          <Text style={styles.checkboxLabel}>Este cubo tem paridade</Text>
         </Pressable>
-        <EditableMediaList items={parityMedia} onChange={setParityMedia} />
+
+        {hasParity ? (
+          <>
+            <Text style={styles.helper}>
+              Fotos ou vídeos da galeria. Toque no nome para editar e use as setas para reordenar.
+            </Text>
+            <Pressable style={styles.secondaryButton} onPress={pickParityMedia}>
+              <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
+              <Text style={styles.secondaryButtonText}>Adicionar mídias</Text>
+            </Pressable>
+            <EditableMediaList
+              items={parityMedia}
+              onChange={setParityMedia}
+              editableName
+            />
+          </>
+        ) : null}
 
         <Text style={styles.label}>Solução:</Text>
         <Text style={styles.helper}>
@@ -398,6 +431,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkboxLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
   },
   input: {
     backgroundColor: colors.surface,
