@@ -1,7 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Cube } from '../types/cube';
-import { colors } from '../theme/colors';
+import { colors, DIFFICULTY_COLORS } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { CubePlaceholder } from './CubePlaceholder';
 
@@ -17,7 +17,10 @@ export function CubeCard({ cube, width, onPress }: Props) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
-        { width },
+        {
+          width,
+          backgroundColor: `${DIFFICULTY_COLORS[cube.difficulty]}66`,
+        },
         pressed && styles.pressed,
       ]}
     >
@@ -37,7 +40,6 @@ export function CubeCard({ cube, width, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
