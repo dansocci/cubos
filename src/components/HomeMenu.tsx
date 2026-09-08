@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import {
   ActivityIndicator,
   Modal,
@@ -21,6 +22,8 @@ import {
 } from '../utils/sortCubes';
 
 const SORT_FIELDS: SortField[] = ['createdAt', 'name', 'difficulty'];
+const APP_VERSION =
+  Constants.expoConfig?.version ?? Constants.nativeAppVersion ?? '—';
 
 type Props = {
   visible: boolean;
@@ -70,7 +73,11 @@ export function HomeMenu({
             </Pressable>
           </View>
 
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scroll}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.sectionLabel}>Ordenar</Text>
             <View style={styles.sectionCard}>
               {SORT_FIELDS.map((field, index) => {
@@ -160,6 +167,10 @@ export function HomeMenu({
               </Text>
             )}
           </ScrollView>
+
+          <View style={styles.footer}>
+            <Text style={styles.versionText}>Versão {APP_VERSION}</Text>
+          </View>
         </View>
       </View>
     </Modal>
@@ -202,8 +213,11 @@ function createStyles(colors: ThemeColors) {
       fontWeight: '800',
       color: colors.text,
     },
+    scroll: {
+      flex: 1,
+    },
     content: {
-      paddingBottom: spacing.xl,
+      paddingBottom: spacing.md,
       gap: spacing.sm,
     },
     sectionLabel: {
@@ -282,6 +296,18 @@ function createStyles(colors: ThemeColors) {
       color: colors.white,
       fontSize: 15,
       fontWeight: '700',
+    },
+    footer: {
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+      paddingTop: spacing.md,
+      marginTop: spacing.sm,
+      alignItems: 'center',
+    },
+    versionText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textSecondary,
     },
     pressed: {
       opacity: 0.85,
