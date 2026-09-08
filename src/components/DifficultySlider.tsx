@@ -10,8 +10,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { DIFFICULTY_LABELS, type Difficulty } from '../types/cube';
-import { colors, DIFFICULTY_COLORS } from '../theme/colors';
+import { DIFFICULTY_COLORS } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
+import { useTheme } from '../context/ThemeContext';
 
 type Props = {
   value: Difficulty;
@@ -49,6 +50,7 @@ function levelToPosition(level: Difficulty, trackWidth: number) {
 }
 
 export function DifficultySlider({ value, onChange }: Props) {
+  const { colors } = useTheme();
   const trackWidth = useSharedValue(0);
   const thumbX = useSharedValue(0);
   const startX = useSharedValue(0);

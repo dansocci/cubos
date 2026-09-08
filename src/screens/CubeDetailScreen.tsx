@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -18,15 +18,18 @@ import { MediaCarousel } from '../components/MediaCarousel';
 import { SolutionMediaList } from '../components/SolutionMediaList';
 import { VideoPlayerModal } from '../components/VideoPlayerModal';
 import { useCubes } from '../context/CubesContext';
+import { useTheme } from '../context/ThemeContext';
 import type { RootStackParamList } from '../navigation/types';
 import { DIFFICULTY_LABELS } from '../types/cube';
-import { colors, DIFFICULTY_COLORS } from '../theme/colors';
+import { DIFFICULTY_COLORS, type ThemeColors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CubeDetail'>;
 
 export function CubeDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { getCube, removeCube } = useCubes();
   const cube = getCube(route.params.id);
 
@@ -42,7 +45,7 @@ export function CubeDetailScreen({ navigation, route }: Props) {
         </Pressable>
       ),
     });
-  }, [navigation]);
+  }, [navigation, colors.text, styles.backButton]);
 
   if (!cube) {
     return (
@@ -178,121 +181,123 @@ export function CubeDetailScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.lg,
-    paddingBottom: spacing.xxl,
-    gap: spacing.md,
-  },
-  backButton: {
-    marginLeft: spacing.xs,
-    padding: spacing.xs,
-  },
-  photoWrap: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-  },
-  name: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  section: {
-    gap: spacing.sm,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  difficultyBadge: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.full,
-  },
-  difficultyDot: {
-    width: 10,
-    height: 10,
-    borderRadius: radius.full,
-  },
-  difficultyText: {
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  notes: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.textSecondary,
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  editButton: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  editText: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  deleteButton: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  deleteText: {
-    color: colors.danger,
-    fontWeight: '700',
-  },
-  missing: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.background,
-  },
-  missingText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  link: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      padding: spacing.lg,
+      paddingBottom: spacing.xxl,
+      gap: spacing.md,
+    },
+    backButton: {
+      marginLeft: spacing.xs,
+      padding: spacing.xs,
+    },
+    photoWrap: {
+      width: '100%',
+      aspectRatio: 1,
+      borderRadius: radius.lg,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    photo: {
+      width: '100%',
+      height: '100%',
+    },
+    name: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    section: {
+      gap: spacing.sm,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    difficultyBadge: {
+      alignSelf: 'flex-start',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.full,
+    },
+    difficultyDot: {
+      width: 10,
+      height: 10,
+      borderRadius: radius.full,
+    },
+    difficultyText: {
+      fontWeight: '700',
+      fontSize: 15,
+    },
+    notes: {
+      fontSize: 15,
+      lineHeight: 22,
+      color: colors.textSecondary,
+    },
+    footer: {
+      flexDirection: 'row',
+      gap: spacing.md,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    editButton: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing.xs,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    editText: {
+      color: colors.primary,
+      fontWeight: '700',
+    },
+    deleteButton: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing.xs,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.danger,
+    },
+    deleteText: {
+      color: colors.danger,
+      fontWeight: '700',
+    },
+    missing: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.background,
+    },
+    missingText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+    },
+    link: {
+      color: colors.primary,
+      fontWeight: '700',
+    },
+  });
+}

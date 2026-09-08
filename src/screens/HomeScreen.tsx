@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -13,10 +15,20 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CubeCard } from '../components/CubeCard';
+import { HomeMenu } from '../components/HomeMenu';
 import { useCubes } from '../context/CubesContext';
+import { useTheme } from '../context/ThemeContext';
 import type { RootStackParamList } from '../navigation/types';
-import { colors } from '../theme/colors';
+import type { ThemeColors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
+import { exportCubesPdf } from '../utils/exportCubesPdf';
+import {
+  DEFAULT_CUBE_SORT,
+  nextSort,
+  sortCubes,
+  type CubeSort,
+  type SortField,
+} from '../utils/sortCubes';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
@@ -25,14 +37,48 @@ const H_PADDING = spacing.lg;
 
 export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { cubes, loading } = useCubes();
+  const [sort, setSort] = useState<CubeSort>(DEFAULT_CUBE_SORT);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const sortedCubes = useMemo(() => sortCubes(cubes, sort), [cubes, sort]);
   const screenWidth = Dimensions.get('window').width;
   const itemWidth = (screenWidth - H_PADDING * 2 - GAP) / 2;
+
+  const handleSortChange = (field: SortField) => {
+    setSort((current) => nextSort(current, field));
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      setExporting(true);
+      await exportCubesPdf(sortedCubes);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Não foi possível exportar o PDF.';
+      Alert.alert('Erro ao exportar', message);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Cubos</Text>
+        <View style={styles.headerLeft}>
+          <Pressable
+            onPress={() => setMenuOpen(true)}
+            hitSlop={10}
+            style={({ pressed }) => [styles.menuButton, pressed && styles.pressed]}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir menu"
+          >
+            <Ionicons name="menu" size={28} color={colors.text} />
+          </Pressable>
+          <Text style={styles.title}>Cubos</Text>
+        </View>
         <View style={styles.counterBadge}>
           <Image
             source={require('../../assets/cube-count-icon.png')}
@@ -50,14 +96,14 @@ export function HomeScreen({ navigation }: Props) {
         </View>
       ) : (
         <FlatList
-          data={cubes}
+          data={sortedCubes}
           keyExtractor={(item) => item.id}
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={[
             styles.listContent,
             { paddingBottom: insets.bottom + 96 },
-            cubes.length === 0 && styles.emptyContent,
+            sortedCubes.length === 0 && styles.emptyContent,
           ]}
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -88,103 +134,127 @@ export function HomeScreen({ navigation }: Props) {
       >
         <Ionicons name="add" size={32} color={colors.white} />
       </Pressable>
+
+      <HomeMenu
+        visible={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        sort={sort}
+        onSortChange={handleSortChange}
+        exporting={exporting}
+        onExportPdf={handleExportPdf}
+        canExport={cubes.length > 0}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: H_PADDING,
-    paddingVertical: spacing.md,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  counterBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: '#E8EAEE',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  counterIcon: {
-    width: 18,
-    height: 18,
-  },
-  counterSeparator: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  counter: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.text,
-    minWidth: 14,
-    textAlign: 'right',
-  },
-  listContent: {
-    paddingHorizontal: H_PADDING,
-  },
-  emptyContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  row: {
-    justifyContent: 'space-between',
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  empty: {
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xl,
-  },
-  emptyImage: {
-    width: 140,
-    height: 140,
-    marginBottom: spacing.sm,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  fab: {
-    position: 'absolute',
-    right: spacing.lg,
-    width: 60,
-    height: 60,
-    borderRadius: radius.full,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: H_PADDING,
+      paddingVertical: spacing.md,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      flexShrink: 1,
+    },
+    menuButton: {
+      padding: 2,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.text,
+    },
+    counterBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+    },
+    counterIcon: {
+      width: 18,
+      height: 18,
+    },
+    counterSeparator: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
+    counter: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: colors.text,
+      minWidth: 14,
+      textAlign: 'right',
+    },
+    listContent: {
+      paddingHorizontal: H_PADDING,
+    },
+    emptyContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
+    row: {
+      justifyContent: 'space-between',
+    },
+    centered: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    empty: {
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.xl,
+    },
+    emptyImage: {
+      width: 140,
+      height: 140,
+      marginBottom: spacing.sm,
+    },
+    emptyTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    fab: {
+      position: 'absolute',
+      right: spacing.lg,
+      width: 60,
+      height: 60,
+      borderRadius: radius.full,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      shadowOffset: { width: 0, height: 3 },
+    },
+    pressed: {
+      opacity: 0.75,
+    },
+  });
+}

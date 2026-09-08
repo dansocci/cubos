@@ -20,10 +20,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DifficultySlider } from '../components/DifficultySlider';
 import { EditableMediaList } from '../components/EditableMediaList';
 import { useCubes } from '../context/CubesContext';
+import { useTheme } from '../context/ThemeContext';
 import type { RootStackParamList } from '../navigation/types';
 import type { CubeMedia, Difficulty } from '../types/cube';
 import { defaultMediaName } from '../types/cube';
-import { colors } from '../theme/colors';
+import type { ThemeColors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CubeForm'>;
@@ -47,6 +48,8 @@ async function ensurePermission(
 export function CubeFormScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scrollRef = useRef<ScrollView>(null);
   const fieldOffsets = useRef<Record<string, number>>({});
   const { getCube, addCube, editCube } = useCubes();
@@ -408,142 +411,144 @@ export function CubeFormScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-    paddingBottom: spacing.xxl,
-  },
-  label: {
-    marginTop: spacing.md,
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text,
-  },
-  helper: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  checkboxLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-    color: colors.text,
-  },
-  notes: {
-    minHeight: 110,
-  },
-  photoPreview: {
-    width: '72%',
-    aspectRatio: 1,
-    alignSelf: 'center',
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  photo: {
-    width: '100%',
-    height: '100%',
-  },
-  photoEmpty: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    alignSelf: 'flex-start',
-  },
-  secondaryButtonText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  footer: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  cancelButton: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  cancelText: {
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
-  saveButton: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-  },
-  saveDisabled: {
-    opacity: 0.6,
-  },
-  saveText: {
-    fontWeight: '700',
-    color: colors.white,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      padding: spacing.lg,
+      gap: spacing.sm,
+      paddingBottom: spacing.xxl,
+    },
+    label: {
+      marginTop: spacing.md,
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    helper: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      marginBottom: spacing.xs,
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      marginBottom: spacing.sm,
+    },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    checkboxChecked: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    checkboxLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.md,
+      fontSize: 16,
+      color: colors.text,
+    },
+    notes: {
+      minHeight: 110,
+    },
+    photoPreview: {
+      width: '72%',
+      aspectRatio: 1,
+      alignSelf: 'center',
+      borderRadius: radius.md,
+      overflow: 'hidden',
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    photo: {
+      width: '100%',
+      height: '100%',
+    },
+    photoEmpty: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+    },
+    row: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: spacing.sm,
+    },
+    secondaryButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.xs,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      alignSelf: 'flex-start',
+    },
+    secondaryButtonText: {
+      color: colors.primary,
+      fontWeight: '600',
+    },
+    footer: {
+      flexDirection: 'row',
+      gap: spacing.md,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    cancelButton: {
+      flex: 1,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+    },
+    cancelText: {
+      fontWeight: '700',
+      color: colors.textSecondary,
+    },
+    saveButton: {
+      flex: 1,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+    },
+    saveDisabled: {
+      opacity: 0.6,
+    },
+    saveText: {
+      fontWeight: '700',
+      color: colors.white,
+    },
+  });
+}

@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { useTheme } from '../context/ThemeContext';
 import { isVideoUri } from '../media/isVideoUri';
 import type { CubeMedia } from '../types/cube';
-import { colors } from '../theme/colors';
+import type { ThemeColors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
 type Props = {
@@ -24,6 +25,9 @@ function moveItem(items: CubeMedia[], from: number, to: number): CubeMedia[] {
 }
 
 export function EditableMediaList({ items, onChange, editableName = false }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+
   return (
     <View style={styles.list}>
       {items.map((item, index) => {
@@ -101,59 +105,61 @@ export function EditableMediaList({ items, onChange, editableName = false }: Pro
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.sm,
-  },
-  imageThumb: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-  },
-  videoThumb: {
-    width: 48,
-    height: 48,
-    borderRadius: radius.sm,
-    backgroundColor: '#111827',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nameInput: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.sm,
-    backgroundColor: colors.background,
-  },
-  nameLabel: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  iconButton: {
-    padding: 2,
-  },
-  iconDisabled: {
-    opacity: 0.45,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    list: {
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.sm,
+    },
+    imageThumb: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.sm,
+    },
+    videoThumb: {
+      width: 48,
+      height: 48,
+      borderRadius: radius.sm,
+      backgroundColor: '#111827',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    nameInput: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.sm,
+      borderRadius: radius.sm,
+      backgroundColor: colors.background,
+    },
+    nameLabel: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+    },
+    iconButton: {
+      padding: 2,
+    },
+    iconDisabled: {
+      opacity: 0.45,
+    },
+  });
+}

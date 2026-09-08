@@ -12,9 +12,10 @@ import {
   View,
 } from 'react-native';
 
+import { useTheme } from '../context/ThemeContext';
 import { isVideoUri } from '../media/isVideoUri';
 import type { CubeMedia } from '../types/cube';
-import { colors } from '../theme/colors';
+import type { ThemeColors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
 type Props = {
@@ -27,6 +28,8 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const ITEM_WIDTH = SCREEN_WIDTH - spacing.lg * 2;
 
 export function MediaCarousel({ items, onOpenImage, onOpenVideo }: Props) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [index, setIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
 
@@ -88,53 +91,55 @@ export function MediaCarousel({ items, onOpenImage, onOpenVideo }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  content: {
-    gap: 0,
-  },
-  item: {
-    height: 220,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.placeholder,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  videoThumb: {
-    flex: 1,
-    backgroundColor: '#111827',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-  },
-  videoLabel: {
-    color: colors.white,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  caption: {
-    marginTop: spacing.sm,
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    textAlign: 'center',
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: radius.full,
-    backgroundColor: colors.border,
-  },
-  dotActive: {
-    backgroundColor: colors.primary,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    content: {
+      gap: 0,
+    },
+    item: {
+      height: 220,
+      borderRadius: radius.md,
+      overflow: 'hidden',
+      backgroundColor: colors.placeholder,
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+    },
+    videoThumb: {
+      flex: 1,
+      backgroundColor: '#111827',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: spacing.sm,
+      paddingHorizontal: spacing.md,
+    },
+    videoLabel: {
+      color: colors.white,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    caption: {
+      marginTop: spacing.sm,
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+      textAlign: 'center',
+    },
+    dots: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: spacing.xs,
+      marginTop: spacing.sm,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: radius.full,
+      backgroundColor: colors.border,
+    },
+    dotActive: {
+      backgroundColor: colors.primary,
+    },
+  });
+}

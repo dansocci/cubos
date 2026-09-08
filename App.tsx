@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { CubesProvider, useCubes } from './src/context/CubesContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -15,6 +16,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 function AppContent() {
   const { loading } = useCubes();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     if (!loading) {
@@ -25,7 +27,7 @@ function AppContent() {
   return (
     <>
       <RootNavigator />
-      <StatusBar style="dark" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
   );
 }
@@ -34,9 +36,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <CubesProvider>
-          <AppContent />
-        </CubesProvider>
+        <ThemeProvider>
+          <CubesProvider>
+            <AppContent />
+          </CubesProvider>
+        </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

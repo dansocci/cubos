@@ -3,9 +3,10 @@ import * as VideoThumbnails from 'expo-video-thumbnails';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useTheme } from '../context/ThemeContext';
 import { isVideoUri } from '../media/isVideoUri';
 import type { CubeMedia } from '../types/cube';
-import { colors } from '../theme/colors';
+import type { ThemeColors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 
 type Props = {
@@ -25,6 +26,8 @@ function SolutionMediaItem({
   onOpenImage: (uri: string) => void;
   onOpenVideo: (uri: string) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const video = isVideoUri(item.uri);
   const [thumb, setThumb] = useState<string | null>(video ? null : item.uri);
 
@@ -85,7 +88,7 @@ function SolutionMediaItem({
 
 export function SolutionMediaList({ items, onOpenImage, onOpenVideo }: Props) {
   return (
-    <View style={styles.list}>
+    <View style={stylesList.list}>
       {items.map((item, index) => (
         <SolutionMediaItem
           key={`${item.uri}-${index}`}
@@ -99,51 +102,56 @@ export function SolutionMediaList({ items, onOpenImage, onOpenVideo }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const stylesList = StyleSheet.create({
   list: {
     gap: spacing.md,
   },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.sm,
-  },
-  thumbWrap: {
-    width: 96,
-    height: 64,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  thumb: {
-    width: 96,
-    height: 64,
-    borderRadius: radius.sm,
-    backgroundColor: colors.placeholder,
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  playBadge: {
-    position: 'absolute',
-    width: 24,
-    height: 24,
-    borderRadius: radius.full,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  label: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.text,
-  },
 });
+
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    item: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.md,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: spacing.sm,
+    },
+    thumbWrap: {
+      width: 96,
+      height: 64,
+      borderRadius: radius.sm,
+      overflow: 'hidden',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    thumb: {
+      width: 96,
+      height: 64,
+      borderRadius: radius.sm,
+      backgroundColor: colors.placeholder,
+    },
+    fallback: {
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    playBadge: {
+      position: 'absolute',
+      width: 24,
+      height: 24,
+      borderRadius: radius.full,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    label: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '600',
+      color: colors.text,
+    },
+  });
+}
